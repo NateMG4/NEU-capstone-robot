@@ -1,0 +1,38 @@
+{
+  "simulation_only": false,
+  "wheel_radius_m": null,
+  "wheelbase_m": null,
+  "track_width_m": null,
+  "max_wheel_rad_s": 0.5,
+  "hiwonder": {
+    "bus_number": 1,
+    "address": 52,
+    "motor_type": null,
+    "encoder_polarity": null,
+    "wheel_channels": [
+      null,
+      null,
+      null,
+      null
+    ],
+    "motor_signs": [
+      null,
+      null,
+      null,
+      null
+    ],
+    "encoder_signs": [
+      null,
+      null,
+      null,
+      null
+    ],
+    "counts_per_wheel_rev": [
+      null,
+      null,
+      null,
+      null
+    ],
+    "max_speed_counts": 10
+  }
+}

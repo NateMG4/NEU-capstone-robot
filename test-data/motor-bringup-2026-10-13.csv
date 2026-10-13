@@ -1,0 +1,2 @@
+motor_type,channel,speed_counts_per_10ms,duration_s,supply_v,before_m1,before_m2,before_m3,before_m4,after_m1,after_m2,after_m3,after_m4,operator_observation
+3,1,2,0.25,12.646,-124,-80,-1,0,-123,-80,-1,0,sound but no visible wheel movement
