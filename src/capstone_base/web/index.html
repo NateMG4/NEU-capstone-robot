@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mecanum Lab · Odometry & targets</title>
+  <link rel="stylesheet" href="./style.css">
+  <script src="./app.js" defer></script>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="./" aria-label="Mecanum Lab home"><span class="brand-icon">⌘</span><span>MECANUM<span class="brand-light"> LAB</span></span></a>
+    <div class="header-meta"><span id="source-badge" class="badge">SIMULATION</span><span id="connection" class="connection">Connecting…</span></div>
+  </header>
+  <main>
+    <div class="page-heading"><div><p class="eyebrow">ROBOTICS / MOTION WORKBENCH</p><h1>See every move.</h1><p class="intro">Read the wheels. Estimate the pose. Preview the next target.</p></div><div class="frame-label"><span class="dot"></span><span id="frame-label">Local frame · odom</span><small id="camera-summary">Camera not configured</small></div></div>
+    <div id="error" class="notice error" role="alert" hidden></div>
+    <section id="recovery-panel" class="notice recovery-banner" hidden aria-label="Encoder fault recovery">
+      <div><h2 id="recovery-heading">Encoder recovery</h2><p id="recovery-help">Recovery confirms zero commands and stable counters, then discards uncertain motion. Movement stays off.</p></div>
+      <button id="recover" class="secondary" type="button">Recover encoders · stay stopped</button>
+    </section>
+    <div class="workspace">
+      <aside class="controls">
+        <section class="panel"><div class="panel-heading"><h2>01 <span>Encoder source</span></h2></div>
+          <div class="segmented" role="group" aria-label="Encoder source"><button id="simulation-mode" class="selected" type="button">Simulation</button><button id="hardware-mode" type="button" disabled>Live robot</button></div>
+          <p id="source-help" class="muted">Ideal simulated wheel counts. No hardware connection.</p>
+          <div class="apply-row"><div><strong>Apply target</strong><small id="apply-help">Off: calculate wheel speeds only</small></div><label class="switch"><input id="apply" type="checkbox" role="switch" aria-label="Apply target movement"><span></span></label></div>
+          <div id="motion-state" class="status-line" role="status">Preview — select a target</div>
+        </section>
+        <button id="stop" class="stop" type="button">■ STOP MOVEMENT <kbd>Space</kbd></button>
+        <section class="panel"><div class="panel-heading"><h2>02 <span>Target pose</span></h2><span class="tiny-tag">CLICK THE MAP</span></div>
+          <form id="target-form"><div class="field-pair"><label>X <span>meters</span><input id="target-x" name="x" type="number" step="0.01" value="0.50" required></label><label>Y <span>meters</span><input id="target-y" name="y" type="number" step="0.01" value="0.30" required></label></div>
+            <label>Heading <span>degrees CCW</span><input id="target-heading" name="heading" type="number" min="-180" max="180" step="1" value="0" required></label>
+            <button class="primary" type="submit">Preview target <span>↗</span></button>
+          </form>
+          <p id="target-frame-help" class="muted">Targets use the current coordinate frame. Select within 2 m of the estimated robot position.</p>
+          <div class="target-summary"><div><span>Distance to target</span><strong id="distance">0.000 <small>m</small></strong></div><div><span>Heading error</span><strong id="heading-error">0.0 <small>°</small></strong></div></div>
+        </section>
+        <section class="panel navigation-panel"><div class="panel-heading"><h2>03 <span>Speed & navigation</span></h2></div>
+          <form id="navigation-form"><fieldset id="navigation-fields" disabled>
+            <label for="nav-max_speed_m_s">Translation speed <span>m/s</span></label>
+            <div class="speed-control"><input id="speed-slider" type="range" step="any" aria-label="Translation speed slider"><input id="nav-max_speed_m_s" data-setting="max_speed_m_s" type="number" step="any" required aria-label="Translation speed in meters per second"></div>
+            <label for="nav-max_yaw_rad_s">Turning rate <span>rad/s</span></label>
+            <div class="speed-control"><input id="yaw-slider" type="range" step="any" aria-label="Turning rate slider"><input id="nav-max_yaw_rad_s" data-setting="max_yaw_rad_s" type="number" step="any" required aria-label="Turning rate in radians per second"></div>
+            <p id="speed-ceiling" class="ceiling-note">Loading wheel limits…</p>
+            <details class="navigation-advanced"><summary>Advanced navigation</summary>
+              <div class="field-pair"><label>Wheel limit <span>rad/s</span><input id="nav-max_wheel_rad_s" data-setting="max_wheel_rad_s" type="number" step="any" required></label><label>Wheel accel. <span>rad/s²</span><input id="nav-wheel_accel_rad_s2" data-setting="wheel_accel_rad_s2" type="number" step="any" required></label></div>
+              <div class="field-pair"><label>Position gain <span>1/s</span><input id="nav-position_gain" data-setting="position_gain" type="number" step="any" required></label><label>Heading gain <span>1/s</span><input id="nav-yaw_gain" data-setting="yaw_gain" type="number" step="any" required></label></div>
+              <div class="field-pair"><label>Position tolerance <span>m</span><input id="nav-position_tolerance_m" data-setting="position_tolerance_m" type="number" step="any" required></label><label>Heading tolerance <span>degrees</span><input id="nav-yaw_tolerance_rad" data-setting="yaw_tolerance_rad" type="number" step="any" required></label></div>
+            </details>
+            <button class="primary" type="submit">Update navigation <span>↗</span></button>
+            <button id="navigation-reset" class="secondary" type="button">Restore launch values</button>
+          </fieldset></form>
+          <p id="navigation-status" class="muted" role="status">Settings last for this server session and apply to both sources. Updating stops movement; apply the target again to resume.</p>
+        </section>
+        <section class="panel compact"><h2>04 <span>Local origin</span></h2><p class="muted">Start position is (0, 0), facing +X. Reset rebases this source and clears its target and trail.</p><button id="reset" class="secondary" type="button">↺ Reset local origin</button></section>
+        <section class="panel camera-panel" aria-label="Camera integration"><h2>05 <span>Camera position</span></h2>
+          <p id="camera-status" class="status-line" role="status">Camera not configured</p>
+          <p id="camera-pose" class="muted">Waiting for a robot pose.</p>
+          <p id="camera-details" class="muted"></p>
+          <button id="camera-align" class="secondary" type="button" disabled>Use camera & align</button>
+          <button id="camera-disable" class="secondary" type="button" disabled>Disable corrections</button>
+          <p class="muted">Alignment stops movement and clears the target. Then fresh camera poses correct encoder drift. If updates stop, encoders continue in the last aligned frame. Large discrepancies stop movement and require alignment again.</p>
+        </section>
+      </aside>
+      <div class="visuals">
+        <section class="panel map-panel"><div class="map-header"><div><h2>Motion map</h2><p id="map-source">Encoder estimate · no external position verification</p></div><div class="map-tools"><button id="zoom-out" type="button" aria-label="Zoom out">−</button><button id="zoom-in" type="button" aria-label="Zoom in">+</button><button id="fit" type="button">Fit</button></div></div>
+          <div class="map-wrap"><canvas id="map" aria-label="Local XY map. Click to select a target, or use the target pose form." tabindex="0"></canvas><div class="map-caption"><span id="map-scale">4 m view</span><span>+X right · +Y up</span></div></div>
+          <div class="legend"><span><i class="robot-key"></i>Estimated robot</span><span><i class="camera-key"></i>Last camera sighting</span><span><i class="target-key"></i>Target</span><span><i class="trail-key"></i>Encoder trail in current frame</span><span><i class="path-key"></i>Intended straight path</span><span><i class="vector-key"></i>Planned velocity</span></div>
+        </section>
+        <div class="pose-cards"><div class="metric"><span>ESTIMATED X</span><strong id="pose-x">0.000 <small>m</small></strong></div><div class="metric"><span>ESTIMATED Y</span><strong id="pose-y">0.000 <small>m</small></strong></div><div class="metric"><span>CHASSIS HEADING</span><strong id="pose-heading">0.0 <small>°</small></strong></div><div class="metric"><span>ENCODER SAMPLE AGE</span><strong id="sample-age">— <small>ms</small></strong></div></div>
+        <section class="panel wheels-panel"><div class="panel-heading"><div><h2>Wheel telemetry</h2><p class="muted">FL / FR / RL / RR · measured speeds from count deltas</p></div><span id="wheel-limit" class="tiny-tag">RAD/S</span></div><div class="table-scroll"><table><thead><tr><th>Wheel</th><th>Raw counter</th><th>Δ counts</th><th>Travel m</th><th>Measured rad/s</th><th>Planned rad/s</th><th>Applied rad/s</th></tr></thead><tbody id="wheel-rows"></tbody></table></div><div class="wheel-footer"><span id="raw-counts">M1…M4: waiting for baseline</span><span id="count-commands">Command counts / 10 ms: 0, 0, 0, 0</span></div></section>
+        <section class="panel diagnostics-panel"><div class="panel-heading"><div><h2>Encoder health</h2><p id="pose-confidence" class="muted">Encoder estimate; no independent position verification.</p></div><button id="download-diagnostics" class="secondary" type="button">Download diagnostics</button></div>
+          <p id="encoder-config" class="muted"></p>
+          <details id="encoder-diagnostics"><summary>Calibration and last rejected sample</summary><pre id="encoder-calibration"></pre><p id="rejected-summary" class="muted">No rejected sample recorded.</p>
+            <div class="table-scroll"><table><thead><tr><th>Wheel</th><th>Previous raw</th><th>Rejected raw</th><th>Δ counts</th><th>Allowed Δ</th><th>Cmd estimate |Δ|</th><th>Inferred rad/s</th><th>Counts/rev</th></tr></thead><tbody id="rejected-rows"></tbody></table></div>
+          </details>
+        </section>
+        <section class="panel velocity-panel"><div><h2>Computed chassis command</h2><p class="muted">Forward / left / CCW, after wheel-speed limiting. Preview is separate from applied output.</p></div><div class="velocity-values"><span>vx <strong id="cmd-vx">0.000</strong><small>m/s</small></span><span>vy <strong id="cmd-vy">0.000</strong><small>m/s</small></span><span>wz <strong id="cmd-wz">0.000</strong><small>rad/s</small></span></div></section>
+      </div>
+    </div>
+    <footer><span>ODOMETRY WORKBENCH <b>v0.1</b></span><span>Wheel rotation estimates movement. Slip is unobserved. The dashed path assumes a clear floor.</span></footer>
+  </main>
+</body>
+</html>

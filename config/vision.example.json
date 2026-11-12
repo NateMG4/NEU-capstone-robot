@@ -1,0 +1,10 @@
+{
+  "listen_host": "0.0.0.0",
+  "port": 5005,
+  "source_ip": "192.168.50.10",
+  "robot_id": 1,
+  "frame_id": "floor",
+  "max_age_s": 0.5,
+  "max_position_jump_m": 0.3,
+  "max_heading_jump_deg": 25.0
+}

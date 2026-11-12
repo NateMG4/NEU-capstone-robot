@@ -9,3 +9,4 @@ dist/
 logs/
 config/robot.local.json
 config/servo.local.json
+config/vision.local.json
