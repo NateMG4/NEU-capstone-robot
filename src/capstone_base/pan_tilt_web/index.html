@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Pan / Tilt · Motion workbench</title>
+  <link rel="stylesheet" href="./style.css">
+  <script src="./app.js" type="module"></script>
+</head>
+<body>
+  <header><a class="brand" href="./">⌘ <span>MECANUM <b>LAB</b></span></a><div class="connection"><span id="backend" class="tag">CONNECTING</span><span id="connection">Waiting for server…</span></div></header>
+  <main>
+    <div class="heading"><div><p class="eyebrow">ROBOTICS / MOTION WORKBENCH</p><h1>Pan. Tilt. Test.</h1><p class="intro">Test either joint on its own, or both together.</p></div><button id="stop" class="stop" type="button"><span id="stop-label">■ STOP BOTH</span> <kbd>Esc</kbd></button></div>
+    <p id="error" class="notice error" role="alert" hidden></p>
+    <div class="status-strip"><span class="status-dot" id="status-dot"></span><strong id="motion-status" role="status">Connecting…</strong><span id="mode-note">No commands are sent on page load.</span></div>
+    <div class="workspace">
+      <section class="panel control-panel" aria-labelledby="controls-heading">
+        <div class="section-heading"><h2 id="controls-heading"><span>01</span> Target pose</h2><span class="tag">DEGREES</span></div>
+        <p id="coordinate-help" class="muted">Angles are relative to each joint’s calibrated neutral. Editing a target previews it; Apply moves the mechanism.</p>
+        <p id="session-axes" class="muted">Waiting for connected axes…</p>
+        <div id="movement-blocked" class="notice error" role="status" hidden><strong>Movement is blocked</strong><ul id="motion-blockers"></ul></div>
+        <form id="target-form">
+          <fieldset id="motion-controls" disabled>
+            <fieldset id="pan-controls" class="axis-input"><div class="axis-label"><label for="yaw">Yaw <small>pan joint</small></label><span id="pan-limits">—</span></div><div class="angle-input"><input id="yaw" type="number" step="any" value="0" required aria-label="Target yaw in degrees"><span>°</span></div><input id="yaw-range" type="range" min="-45" max="45" value="0" step="0.24" aria-label="Preview yaw"><div class="jogs"><button type="button" data-jog="pan" data-sign="-1">− Yaw</button><span id="pan-current">Actual —</span><button type="button" data-jog="pan" data-sign="1">+ Yaw</button></div></fieldset>
+            <fieldset id="tilt-controls" class="axis-input"><div class="axis-label"><label for="pitch">Pitch <small>tilt joint</small></label><span id="tilt-limits">—</span></div><div class="angle-input"><input id="pitch" type="number" step="any" value="0" required aria-label="Target pitch in degrees"><span>°</span></div><input id="pitch-range" type="range" min="-45" max="45" value="0" step="0.24" aria-label="Preview pitch"><div class="jogs"><button type="button" data-jog="tilt" data-sign="-1">− Pitch</button><span id="tilt-current">Actual —</span><button type="button" data-jog="tilt" data-sign="1">+ Pitch</button></div></fieldset>
+            <div class="settings-row"><label>Time per step <span>seconds</span><input id="duration" type="number" min="0.5" max="2" step="0.1" value="1" required></label><label>Jog increment <span>degrees per button click</span><input id="jog-size" type="number" min="0.24" max="5" step="any" value="1" required></label></div>
+            <button id="apply" class="primary" type="submit" disabled><span id="apply-label">Apply yaw & pitch</span> <span>↗</span></button>
+            <div class="button-row"><button id="neutral" type="button">Move to neutral (0°)</button><button id="use-current" type="button">Use current pose</button></div>
+          </fieldset>
+        </form>
+        <p id="motion-help" class="muted footnote">Waiting for axis configuration.</p>
+        <details id="calibration-tools" open>
+          <summary>Calibrate neutral & travel</summary>
+          <p class="muted">Jog to your chosen zero pose and record Neutral. Then jog to each clear travel end, stopping short of contact, and record End A and End B. Recording and applying calibration preserve the current position.</p>
+          <label class="calibration-label">Joint <select id="calibration-axis" aria-label="Joint to calibrate"></select></label>
+          <div class="calibration-buttons"><button type="button" data-capture="zero_deg" title="Read the current servo angle and set this pose as zero; does not move the servo">Record neutral here</button><button type="button" data-capture="end_a">Record end A</button><button type="button" data-capture="end_b">Record end B</button></div>
+          <p id="calibration-recordings" class="muted">No positions recorded.</p>
+          <label class="calibration-label">Positive joint direction <select id="calibration-direction"><option value="1">Increasing servo angle</option><option value="-1">Decreasing servo angle</option></select></label>
+          <div class="button-row calibration-actions"><button id="save-calibration" type="button" disabled>Save calibration</button><button id="use-calibration" type="button" disabled>Apply saved calibration</button></div>
+          <p id="calibration-status" class="muted" role="status">Waiting for servo feedback.</p>
+        </details>
+      </section>
+      <div class="visual-column">
+        <section class="panel orientation-panel" aria-labelledby="orientation-heading">
+          <div class="section-heading"><div><h2 id="orientation-heading"><span>02</span> Calibration & orientation</h2><p id="orientation-help" class="muted">Configured travel and neutral in the selected angle frame</p></div><div class="legend"><span><i class="range-key"></i>Configured travel</span><span><i class="neutral-key"></i>Neutral</span><span><i class="actual-key"></i>Actual</span><span><i class="preview-key"></i>Preview</span><span><i class="requested-key"></i>Requested</span></div></div>
+          <div class="dial-toolbar"><label>Radial angle frame <select id="dial-frame"><option value="joint">Joint degrees · neutral = 0°</option><option value="servo">Absolute servo degrees</option></select></label></div>
+          <div class="dial-grid">
+            <div class="dial"><p id="pan-frame" class="dial-frame"></p><svg id="pan-dial" viewBox="0 0 250 220" role="img" aria-label="Pan joint, viewed from above"><circle class="dial-circle" cx="125" cy="108" r="77"/><path class="crosshair" d="M125 20V196 M37 108H213"/><g id="pan-annotations"></g><path id="pan-preview" class="preview-arm" d="M125 108V42"/><path id="pan-requested" class="requested-arm" d="M125 108V42"/><path id="pan-arm" class="actual-arm" d="M125 108V47"/><circle class="pivot" cx="125" cy="108" r="9"/><text class="dial-title" x="125" y="216">PAN / TOP VIEW</text></svg><strong id="pan-angle">—</strong><div id="pan-calibration-values" class="dial-values"></div><p id="pan-position-note" class="dial-note"></p></div>
+            <div class="dial"><p id="tilt-frame" class="dial-frame"></p><svg id="tilt-dial" viewBox="0 0 250 220" role="img" aria-label="Pitch joint, viewed from the side"><circle class="dial-circle" cx="125" cy="108" r="77"/><path class="crosshair" d="M125 20V196 M37 108H213"/><g id="tilt-annotations"></g><path id="tilt-preview" class="preview-arm" d="M125 108H191"/><path id="tilt-requested" class="requested-arm" d="M125 108H191"/><path id="tilt-arm" class="actual-arm" d="M125 108H186"/><circle class="pivot" cx="125" cy="108" r="9"/><text class="dial-title" x="125" y="216">TILT / SIDE VIEW</text></svg><strong id="tilt-angle">—</strong><div id="tilt-calibration-values" class="dial-values"></div><p id="tilt-position-note" class="dial-note"></p></div>
+          </div>
+          <p class="muted dial-explainer">The shaded arc shows your configured range; it does not prove physical clearance. “Record neutral here” changes the zero reference. “Move to neutral” commands a move to that recorded pose.</p>
+        </section>
+        <section class="panel history-panel"><div class="section-heading"><div><h2><span>03</span> Position history</h2><p id="history-help" class="muted">Last 60 seconds · servo feedback in joint degrees</p></div><div class="legend"><span><i class="actual-key"></i>Pan</span><span><i class="pitch-key"></i>Tilt</span></div></div><canvas id="history" aria-label="Live chart of pan and tilt feedback over the last sixty seconds"></canvas></section>
+      </div>
+    </div>
+    <section class="panel telemetry-panel" aria-labelledby="telemetry-heading"><div class="section-heading"><div><h2 id="telemetry-heading"><span>04</span> Servo telemetry</h2><p id="bus-info" class="muted">First servo → pan · second servo → tilt</p></div><div class="button-row"><button id="refresh" type="button">Read status / clear fault</button><button id="download" type="button">Export diagnostics ↓</button></div></div>
+      <div class="table-scroll"><table><thead><tr><th>Joint / bus ID</th><th>Joint angle</th><th>Servo angle</th><th>Voltage</th><th>Temperature</th><th>Mode</th><th>Torque</th><th>Sample age</th><th>Torque control</th></tr></thead><tbody id="servo-rows"></tbody></table></div>
+      <p class="muted footnote">Stop holds the current position with torque preserved. Releasing torque can let the supported load drop. <strong>Support the mechanism before releasing.</strong></p>
+      <details><summary>Calibration & motion limits</summary><pre id="calibration">Waiting for configuration…</pre></details>
+    </section>
+    <section class="panel log-panel"><div class="section-heading"><h2><span>05</span> Session activity</h2><span class="muted">Most recent first</span></div><ol id="activity" aria-label="Recent servo events"></ol></section>
+    <footer><span>PAN / TILT WORKBENCH <b>v0.1</b></span><span>Explicit moves · bounded steps · feedback checks · browser heartbeat stop</span></footer>
+  </main>
+</body>
+</html>
