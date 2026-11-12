@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mecanum Lab · Control center</title>
+  <link rel="stylesheet" href="./style.css">
+  <script type="module" src="./app.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand"><span class="brand-mark" aria-hidden="true">⌘</span><div>MECANUM <span>LAB</span><small>CONTROL CENTER</small></div></div>
+    <div class="header-actions"><span id="connection" role="status">Connecting…</span><button id="stop-all" class="stop" type="button" disabled>■ Stop all movement</button></div>
+  </header>
+  <main>
+    <div class="navigation-row">
+      <div class="tabs" role="tablist" aria-label="Robot dashboard">
+        <button id="tab-wheels" role="tab" aria-selected="false" aria-controls="dashboard-panel" tabindex="0" type="button"><span class="tab-icon" aria-hidden="true">↗</span><span>Wheels & navigation<small id="wheels-status">Waiting for status</small></span></button>
+        <button id="tab-pan-tilt" role="tab" aria-selected="false" aria-controls="dashboard-panel" tabindex="-1" type="button"><span class="tab-icon" aria-hidden="true">◎</span><span>Pan & tilt<small id="pan-tilt-status">Waiting for status</small></span></button>
+        <button id="tab-combined" role="tab" aria-selected="false" aria-controls="dashboard-panel" tabindex="-1" type="button"><span class="tab-icon" aria-hidden="true">⊕</span><span>Drive + servos<small id="combined-status">Simultaneous power test</small></span></button>
+      </div>
+      <p class="switch-help">Switching views stops the controls you leave (both in combined view).<br>Apply movement explicitly in the selected dashboard.</p>
+    </div>
+    <p id="combined-help" class="combined-help" hidden>Simultaneous load test: apply a wheel target, then operate pan and tilt while driving. Both servos need distinct configured IDs; assign them with only one servo connected at a time before using the chain. Use servo test mode until travel is calibrated. Servo voltage is shown; supply current requires external measurement.</p>
+    <p id="error" class="notice" role="alert" hidden></p>
+    <p id="action-status" class="action-status" role="status"></p>
+    <section id="dashboard-panel" role="tabpanel" aria-label="Selected robot dashboard">
+      <iframe id="servo-frame" title="Pan and tilt controls" src="about:blank" hidden></iframe>
+      <iframe id="dashboard-frame" title="Robot dashboard" src="about:blank"></iframe>
+    </section>
+  </main>
+</body>
+</html>

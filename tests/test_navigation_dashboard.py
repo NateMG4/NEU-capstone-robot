@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from capstone_base import dashboard
+from capstone_base import control_dashboard, dashboard
 from capstone_base.dashboard import DashboardRuntime, load_settings
 from capstone_base.navigation import NavigationLimits, ramp_wheels, target_wheels
 from capstone_base.odometry import Pose
@@ -249,7 +249,7 @@ def test_hardware_rejects_demo_missing_calibration_and_respects_count_limit(sett
 
 @pytest.mark.parametrize(
     ("module", "backend_flag"),
-    [(dashboard, "--backend")],
+    [(dashboard, "--backend"), (control_dashboard, "--wheel-backend")],
 )
 def test_shipped_demo_cannot_open_hardware(module, backend_flag, monkeypatch, capsys):
     def forbidden(*args, **kwargs):
