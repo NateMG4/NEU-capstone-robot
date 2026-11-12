@@ -1,6 +1,6 @@
 # Hiwonder I2C backend
 
-Expected hardware: Hiwonder 4-Channel Encoder Motor Module, **v1.3 per the user's latest information**. Earlier project notes said v1.4. Check the physical marking in the lab. The implementation follows Hiwonder's published four-channel protocol; it has not been tested against the physical board and does not auto-detect firmware/revision.
+Expected hardware: Hiwonder 4-Channel Encoder Motor Module, **v1.3 per the user's latest information**. Earlier project notes said v1.4. Check the physical marking in the lab. The implementation follows Hiwonder's published four-channel protocol and does not auto-detect firmware/revision. A limited physical test on 2026-10-13 is recorded below; useful wheel motion, calibrated encoder scales and navigation remain unverified.
 
 ## What smbus2 already handles
 
@@ -107,7 +107,12 @@ set_wheel_speeds((fl, fr, rl, rr)) takes rad/s and implements the same interface
 
 set_motor_speed_counts((m1, m2, m3, m4)) is the lower-level mapping/calibration API. It bypasses geometry and wheel signs, accepts signed integer counts/10ms, and still enforces the configured count limit. It requires successful initialization. No open-loop PWM mode is provided.
 
-read_encoder_counts returns four signed 32-bit counters. read_wheel_encoder_counts reorders and signs them; it does not unwrap overflow, detect resets, calculate velocities, or provide odometry yet. Use modular deltas and reset detection when adding odometry.
+read_encoder_counts returns four signed 32-bit counters. read_wheel_encoder_counts
+reorders and signs them. The separate `odometry.py` layer now handles modular
+counter differences, wheel/chassis velocity and pose integration, with timing
+and implausible-jump rejection. Resets that resemble plausible motion cannot
+always be detected; known resets require explicit rebaselining. See the
+[odometry dashboard guide](odometry-dashboard.md) for recovery and calibration.
 
 ## Lifecycle and faults
 
@@ -115,7 +120,13 @@ Construction is inert. open() opens SMBus but writes nothing. initialize() sends
 
 I2C failures, malformed reads, and invalid motion commands latch a fault and attempt one zero-speed write. Further motion requires explicit successful initialize(). Failures are propagated; a failed stop emits a warning. There are no automatic retries of nonzero motion. stop() is available even before initialization or after a fault. close() attempts stop and releases an owned bus even when stopping fails. Injected test buses remain caller-owned.
 
-There is **no controller watchdog configured or background command timeout** inside this backend. The separate keyboard teleop loop provides local input expiry. The CLI provides bounded commands, but a killed/frozen process, failed bus, or Pi power loss can prevent stopping. The keyboard teleop loop now enforces stale-input expiry locally; other continuous callers, including a future ROS node, must do the same and use a verified hardware watchdog if available. The documented 10ms speed unit is not a timeout or required host command interval.
+There is **no controller watchdog configured or background command timeout** inside
+this backend. Keyboard teleop provides local input expiry, and the dashboard
+control loop enforces a 0.75-second browser lease and 30-second move limit. The CLI
+provides bounded commands. A killed/frozen process, failed bus, or Pi power loss
+can prevent stopping. Other continuous callers, including a future ROS node, must
+implement command expiry and use a verified hardware watchdog if available. The
+documented 10ms speed unit is not a timeout or required host command interval.
 
 ## Protocol evidence
 
