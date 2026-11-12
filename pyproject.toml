@@ -12,11 +12,13 @@ dependencies = []
 
 [project.optional-dependencies]
 pi = ["smbus2>=0.4,<1"]
+servo = ["pyserial>=3.5,<4"]
 
 [project.scripts]
 capstone-base = "capstone_base.cli:main"
 capstone-motor-test = "capstone_base.motor_test:main"
 capstone-teleop = "capstone_base.keyboard_teleop:main"
+capstone-servo-test = "capstone_base.servo_test:main"
 
 [dependency-groups]
 dev = ["pytest>=8,<10", "ruff>=0.11,<1"]

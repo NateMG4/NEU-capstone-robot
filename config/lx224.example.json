@@ -1,0 +1,14 @@
+{
+  "port": null,
+  "servo_id": 1,
+  "baudrate": 115200,
+  "timeout_s": 0.2,
+  "write_timeout_s": 0.2,
+  "min_angle_deg": null,
+  "max_angle_deg": null,
+  "max_step_deg": 5.0,
+  "min_duration_s": 0.5,
+  "max_duration_s": 2.0,
+  "position_tolerance_deg": 2.0,
+  "max_temperature_c": 60
+}
